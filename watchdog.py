@@ -5,7 +5,7 @@ from subprocess import call
 import os
 import sys
 import logging
-
+import json
 
 def parse_config(config_path):
     with open(config_path, 'r') as config_file:
