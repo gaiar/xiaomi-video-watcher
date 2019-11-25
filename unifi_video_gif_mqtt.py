@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 
-import sys
 import json
-import subprocess
 import os
-from collections import namedtuple
-from pathlib import Path
+import subprocess
+import sys
 import time
+from collections import deque, namedtuple
+from pathlib import Path
 from tempfile import mkstemp
-from collections import deque
 
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 import paho.mqtt.client as mqtt
 
 
 def load_metadata(metadata_file):
-    with metadata_file.open('r') as meta_file:
+    with metadata_file.open("r") as meta_file:
         metadata = json.load(meta_file)
     return metadata
 
@@ -27,9 +27,12 @@ def parse_metadata(metadata):
     if metadata["inProgress"]:
         return None
 
-    Recording = namedtuple('recording', ['name', 'start', 'end'])
-    return Recording(metadata["meta"]["cameraName"],
-                     str(metadata["startTime"]), str(metadata["endTime"]))
+    Recording = namedtuple("recording", ["name", "start", "end"])
+    return Recording(
+        metadata["meta"]["cameraName"],
+        str(metadata["startTime"]),
+        str(metadata["endTime"]),
+    )
 
 
 def choose_video_files(video_dir, start, end):
@@ -52,35 +55,50 @@ def choose_video_files(video_dir, start, end):
 
 
 def combine_video_files(video_clips):
-    _, video_file_list = mkstemp(
-        prefix='unifi_video_gif_mqtt_videos.', suffix='.txt')
-    _, video_file_mp4 = mkstemp(
-        prefix='unifi_video_gif_mqtt_videos.', suffix='.mp4')
+    _, video_file_list = mkstemp(prefix="unifi_video_gif_mqtt_videos.", suffix=".txt")
+    _, video_file_mp4 = mkstemp(prefix="unifi_video_gif_mqtt_videos.", suffix=".mp4")
 
-    with open(video_file_list, 'w') as f:
+    with open(video_file_list, "w") as f:
         for video in video_clips:
             f.write("file '{}'\n".format(video))
 
-    subprocess.call([
-        "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", video_file_list,
-        "-c", "copy", video_file_mp4
-    ])
+    subprocess.call(
+        [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            video_file_list,
+            "-c",
+            "copy",
+            video_file_mp4,
+        ]
+    )
 
     os.remove(video_file_list)
     return video_file_mp4
 
 
 def convert_video_gif(input_video, output_gif):
-    subprocess.call([
-        "ffmpeg", "-i", input_video, "-vf",
-        "fps=15,scale=320:-1:flags=lanczos", "-y",
-        str(output_gif)
-    ])
+    subprocess.call(
+        [
+            "ffmpeg",
+            "-i",
+            input_video,
+            "-vf",
+            "fps=15,scale=320:-1:flags=lanczos",
+            "-y",
+            str(output_gif),
+        ]
+    )
     os.remove(input_video)
 
 
 def parse_config(config_path):
-    with open(config_path, 'r') as config_file:
+    with open(config_path, "r") as config_file:
         config_data = json.load(config_file)
     return config_data
 
@@ -107,9 +125,9 @@ class UniFiVideoEventHandler(FileSystemEventHandler):
                 self.publish_mqtt_message(gif, camera_name)
 
     def convert_gif(self, metadata_file):
-        output_gif = Path(
-            self.config["gif_output_dir"]).joinpath(metadata_file.stem +
-                                                    '.gif')
+        output_gif = Path(self.config["gif_output_dir"]).joinpath(
+            metadata_file.stem + ".gif"
+        )
 
         # Make sure we didn't get a duplicate filesystem event and process
         # something we already processed
@@ -123,8 +141,7 @@ class UniFiVideoEventHandler(FileSystemEventHandler):
             return None, None
 
         video_dir = metadata_file.parent.parent
-        video_files = choose_video_files(video_dir, metadata.start,
-                                         metadata.end)
+        video_files = choose_video_files(video_dir, metadata.start, metadata.end)
 
         # Each video is 2 seconds long, so take 7 of them to make 14 second gif
         if len(video_files) > 7:
@@ -139,10 +156,10 @@ class UniFiVideoEventHandler(FileSystemEventHandler):
         return output_gif, metadata.name
 
     def publish_mqtt_message(self, gif, camera_name):
-        self.mqtt_client.connect(self.config["mqtt_server"],
-                                 self.config["mqtt_port"])
+        self.mqtt_client.connect(self.config["mqtt_server"], self.config["mqtt_port"])
         ret = self.mqtt_client.publish(
-            self.config["mqtt_base_topic"] + "/" + camera_name, gif.name)
+            self.config["mqtt_base_topic"] + "/" + camera_name, gif.name
+        )
 
 
 def main():
@@ -151,8 +168,7 @@ def main():
 
     event_handler = UniFiVideoEventHandler(config)
     observer = Observer()
-    observer.schedule(
-        event_handler, config["unifi_video_watch_dir"], recursive=True)
+    observer.schedule(event_handler, config["unifi_video_watch_dir"], recursive=True)
     observer.start()
 
     try:
