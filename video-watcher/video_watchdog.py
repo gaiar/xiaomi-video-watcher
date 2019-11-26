@@ -77,8 +77,13 @@ class Handler(FileSystemEventHandler):
 
                 command = [
                     "ffmpeg",
+                    "-loglevel",
+                    "error",
+                    "-hide_banner",
+                    "-nostats",
                     "-i",
                     filepath,
+                    "-y",
                     "-filter_complex",
                     "[0:v] fps=12,scale=w=640:h=-1,split [a][b];[a] palettegen=stats_mode=single [p];[b][p] paletteuse=new=1",
                     tempfile,
@@ -96,8 +101,15 @@ class Handler(FileSystemEventHandler):
                     )
                 )
 
-                command = ["gifsicle", "-O3", tempfile, "-o", giffile]
-                
+                command = [
+                    "gifsicle",
+                    "-f",
+                    "-O3",
+                    tempfile,
+                    "-o",
+                    giffile,
+                ]
+
                 call(command)
                 logging.info(
                     "Created optimized file {0} with size of {1} MB".format(
@@ -110,10 +122,10 @@ class Handler(FileSystemEventHandler):
                     )
                 )
 
-                self._send_to_telegram(filepath)
+                #self._send_to_telegram(filepath)
 
                 tempfile.unlink()
-                # filepath.unlink()
+                filepath.unlink()
                 logging.info("Deleted file {0}".format(tempfile.name))
                 print("Deleted file {0}".format(tempfile.name))
 

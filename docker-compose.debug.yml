@@ -1,0 +1,10 @@
+version: '2.1'
+
+services:
+  xiaomi-video-watcher:
+    image: xiaomi-video-watcher
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
