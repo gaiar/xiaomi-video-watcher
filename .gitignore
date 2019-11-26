@@ -103,6 +103,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 /.vscode
-videos/*
-temp/*
-gifs/*
+data/*
+
