@@ -13,7 +13,7 @@ import paho.mqtt.client as mqtt
 from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-
+import shutil
 
 def parse_config(config_path):
     with open(config_path, "r") as config_file:
@@ -58,7 +58,7 @@ class Handler(FileSystemEventHandler):
         elif event.event_type == "created":
             # Take any action here when a file is first created.
             print("Received created event - {0}".format(event.src_path))
-            filepath, tempfile, giffile = self._get_paths(event.src_path)
+            filepath, tempfile, giffile, processfile = self._get_paths(event.src_path)
             if PurePath(filepath).suffix == ".mp4":
                 # TODO: Add timings
                 logging.info(
@@ -75,6 +75,7 @@ class Handler(FileSystemEventHandler):
                 # cmd = [ffmpeg,'-i', inFile,'-f', 'image2','-vf',
                 # "select='eq(pict_type,PICT_TYPE_I)'",'-vsync','vfr', imgFilenames]
 
+# Running ffmpeg to gif conversion
                 command = [
                     "ffmpeg",
                     "-loglevel",
@@ -100,7 +101,7 @@ class Handler(FileSystemEventHandler):
                         tempfile.name, tempfile.stat().st_size / 1024
                     )
                 )
-
+# Optimizing GIF file
                 command = [
                     "gifsicle",
                     "-f",
@@ -110,7 +111,7 @@ class Handler(FileSystemEventHandler):
                     giffile,
                 ]
 
-                call(command)
+                #call(command)
                 logging.info(
                     "Created optimized file {0} with size of {1} MB".format(
                         giffile.name, giffile.stat().st_size / 1024
@@ -123,6 +124,26 @@ class Handler(FileSystemEventHandler):
                 )
 
                 #self._send_to_telegram(filepath)
+# Creating screenshot 
+
+#ffmpeg -ss 01:23:45 -i input -vframes 1 -q:v 2 output.jpg
+                command = [
+                    "ffmpeg",
+                    "-loglevel",
+                    "error",
+                    "-hide_banner",
+                    "-nostats",
+                    "-ss",
+                    "00:00:10",
+                    "-i",
+                    filepath,
+                    "-vframes",
+                    "1",
+                    "-q:v",
+                    "2",
+                    processfile.with_suffix(".jpg")]
+                call(command)
+                shutil.copy(str(filepath), str(processfile.with_suffix(".mp4")))
 
                 tempfile.unlink()
                 filepath.unlink()
@@ -143,7 +164,8 @@ class Handler(FileSystemEventHandler):
         filename = str(filepath.name).split(".")[0]
         tempfile = Path(self.config["xiaomi_video_temp_dir"], filename + ".gif")
         giffile = Path(self.config["xiaomi_video_gif_dir"], filename + ".gif")
-        return filepath, tempfile, giffile
+        processfile = Path(self.config["xiaomi_video_processed_dir"], filename)
+        return filepath, tempfile, giffile, processfile
 
     def _send_to_telegram(self, filepath):
 
