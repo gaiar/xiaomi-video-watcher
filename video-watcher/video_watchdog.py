@@ -202,7 +202,7 @@ def main():
 
     observer = Observer()
     event_handler = Handler(config)
-    observer.schedule(event_handler, config["video_watch_dir"], recursive=True)
+    observer.schedule(event_handler, os.path.realpath(config["video_watch_dir"]), recursive=True)
     observer.start()
 
     try:
