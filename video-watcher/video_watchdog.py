@@ -146,6 +146,7 @@ class Handler(FileSystemEventHandler):
                     "00:00:10",
                     "-i",
                     filepath,
+                    "-y",
                     "-vframes",
                     "1",
                     "-q:v",
