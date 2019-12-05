@@ -75,7 +75,13 @@ class Handler(FileSystemEventHandler):
 
                 # cmd = [ffmpeg,'-i', inFile,'-f', 'image2','-vf',
                 # "select='eq(pict_type,PICT_TYPE_I)'",'-vsync','vfr', imgFilenames]
-
+                command = [
+                    "MP4Box",
+                    "-inter",
+                    "500",
+                    tempfile
+                ]
+                call(command)
 # Running ffmpeg to gif conversion
                 command = [
                     "ffmpeg",
