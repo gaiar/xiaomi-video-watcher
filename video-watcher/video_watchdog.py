@@ -13,6 +13,7 @@ import paho.mqtt.client as mqtt
 from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+from watchdog.observers.polling import PollingObserver
 import shutil
 
 def parse_config(config_path):
@@ -200,7 +201,7 @@ def main():
     config = parse_config(config_filename)
     print("[INFO] :: Config is {0}".format(json.dumps(config)))
 
-    observer = Observer()
+    observer = PollingObserver()
     event_handler = Handler(config)
     observer.schedule(event_handler, os.path.realpath(config["video_watch_dir"]), recursive=True)
     observer.start()
