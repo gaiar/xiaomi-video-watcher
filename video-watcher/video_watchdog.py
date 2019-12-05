@@ -155,7 +155,9 @@ class Handler(FileSystemEventHandler):
                 shutil.copy(str(filepath), str(processfile.with_suffix(".mp4")))
 
                 tempfile.unlink()
-                filepath.unlink()
+                #filepath.unlink()
+
+                self._send_to_telegram(processfile.with_suffix(".mp4"))
                 logging.info("Deleted file {0}".format(tempfile.name))
                 print("Deleted file {0}".format(tempfile.name))
 
