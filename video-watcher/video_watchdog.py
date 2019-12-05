@@ -120,7 +120,7 @@ class Handler(FileSystemEventHandler):
                     giffile,
                 ]
 
-                #call(command)
+                call(command)
                 logging.info(
                     "Created optimized file {0} with size of {1} MB".format(
                         giffile.name, giffile.stat().st_size / 1024
