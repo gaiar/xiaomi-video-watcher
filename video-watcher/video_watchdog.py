@@ -162,10 +162,11 @@ class Handler(FileSystemEventHandler):
     def _get_paths(self, path):
         filepath = Path(path)
         filename = str(filepath.name).split(".")[0]
-        tempfile = Path(self.config["xiaomi_video_temp_dir"], filename + ".gif")
-        giffile = Path(self.config["xiaomi_video_gif_dir"], filename + ".gif")
-        processfile = Path(self.config["xiaomi_video_processed_dir"], filename)
+        tempfile = Path(self.config["video_temp_dir"], filename + ".gif")
+        giffile = Path(self.config["video_gif_dir"], filename + ".gif")
+        processfile = Path(self.config["video_processed_dir"], filename)
         return filepath, tempfile, giffile, processfile
+
 
     def _send_to_telegram(self, filepath):
 
@@ -173,7 +174,12 @@ class Handler(FileSystemEventHandler):
             try:
                 logging.debug("Sending to telegram {0}".format(filepath))
                 self.updater.bot.send_video(
-                    "@baimuratov_bot_group", open(filepath, "rb")
+                    chat_id="@baimuratov_bot_group", video=open(filepath, "rb"),
+                    duration=60,
+                    caption="Motion detected!",
+                    supports_streaming=True,
+                    disable_notification=True,
+                    timout=30
                 )
                 logging.debug("{0} sent successfully ".format(filepath))
                 break
@@ -186,9 +192,8 @@ class Handler(FileSystemEventHandler):
 
         return None
 
-
 def main():
-    logging.basicConfig(filename="xiaomi_video_watcher.log", level=logging.INFO)
+    logging.basicConfig(filename="video_watcher.log", level=logging.INFO)
     logging.info("[INFO] :: Started watching folder")
     print("[INFO] :: Started watching")
     _, config_filename = sys.argv
@@ -197,7 +202,7 @@ def main():
 
     observer = Observer()
     event_handler = Handler(config)
-    observer.schedule(event_handler, config["xiaomi_video_watch_dir"], recursive=True)
+    observer.schedule(event_handler, config["video_watch_dir"], recursive=True)
     observer.start()
 
     try:
